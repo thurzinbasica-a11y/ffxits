@@ -1,53 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-	<title>Test 1</title>
-	<script src="js/handlebars-1.0.0.beta.6.js"></script>
-	<script id="result-template" type="text/x-handlebars-template">
-	<h2>Your Bio</h2>
-	<p>
-	Your name is {{firstname}} {{lastname}} and you are {{age}} years old.
-	</p>
-	</script>
-    <link rel="stylesheet" href="style.css" type="text/css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Target Shooter</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+body {
+  margin: 0;
+  background: #08090d;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+#menu {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #08090d, #181b25);
+  z-index: 10;
+}
+
+#menu h1 {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+#menu p {
+  color: #aaa;
+  margin-bottom: 25px;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 15px 35px;
+  font-size: 18px;
+  font-weight: bold;
+  background: #e53935;
+  color: white;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+  display: none;
+}
+
+#hud {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 20px;
+  font-weight: bold;
+  z-index: 3;
+}
+
+#arena {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(#11151c 1px, transparent 1px),
+    linear-gradient(90deg, #11151c 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.target {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #e53935;
+  border: 8px solid white;
+  box-shadow: 0 0 20px rgba(255,255,255,.25);
+}
+
+.target::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#message {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #aaa;
+  font-size: 15px;
+}
+</style>
 </head>
 
 <body>
 
-	<h2>Render Simple Bio</h2>
+<div id="menu">
+  <h1>🎯 Target Shooter</h1>
+  <p>Acerta o máximo de alvos que conseguir.</p>
+  <button onclick="startGame()">INICIAR</button>
+</div>
 
-	<input type="text" id="firstname" placeholder="First Name"><br/>
-	<input type="text" id="lastname" placeholder="Last Name"><br/>
-	<input type="number" id="age" placeholder="Age"><br/>
-	<button id="demoButton">Demo</button>
+<div id="game">
+  <div id="hud">
+    <span>Pontos: <span id="score">0</span></span>
+    <span>Tempo: <span id="time">30</span>s</span>
+  </div>
 
-	<div id="resultDiv"></div>
+  <div id="arena"></div>
 
-	<script>
+  <div id="message">
+    Toque nos alvos vermelhos
+  </div>
+</div>
 
-	document.addEventListener("DOMContentLoaded", function() {
+<script>
+let score = 0;
+let time = 30;
+let timer;
+let target;
 
-		//Get the contents from the script block 
-		var source = document.querySelector("#result-template").innerHTML;
-		//Compile that baby into a template
-		template = Handlebars.compile(source);
+function startGame() {
+  score = 0;
+  time = 30;
 
-		document.querySelector("#demoButton").addEventListener("click", function() {
-			var fname = document.querySelector("#firstname").value;
-			var lname = document.querySelector("#lastname").value;
-			var age = document.querySelector("#age").value;
+  document.getElementById("score").textContent = score;
+  document.getElementById("time").textContent = time;
 
-			var html = template({firstname:fname, lastname:lname,age:age});
-			document.querySelector("#resultDiv").innerHTML = html;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("game").style.display = "block";
 
-		});
-	});
+  createTarget();
 
+  clearInterval(timer);
 
-	</script>
+  timer = setInterval(() => {
+    time--;
+
+    document.getElementById("time").textContent = time;
+
+    if (time <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+function createTarget() {
+  if (target) {
+    target.remove();
+  }
+
+  target = document.createElement("div");
+  target.className = "target";
+
+  const maxX = window.innerWidth - 90;
+  const maxY = window.innerHeight - 100;
+
+  const x = Math.random() * maxX + 10;
+  const y = Math.random() * maxY + 50;
+
+  target.style.left = x + "px";
+  target.style.top = y + "px";
+
+  target.onclick = () => {
+    score++;
+    document.getElementById("score").textContent = score;
+    createTarget();
+  };
+
+  document.getElementById("arena").appendChild(target);
+}
+
+function endGame() {
+  clearInterval(timer);
+
+  if (target) {
+    target.remove();
+    target = null;
+  }
+
+  document.getElementById("game").style.display = "none";
+  document.getElementById("menu").style.display = "flex";
+
+  document.querySelector("#menu p").textContent =
+    "Fim de jogo! Você fez " + score + " pontos.";
+
+  document.querySelector("#menu button").textContent = "JOGAR NOVAMENTE";
+}
+</script>
 
 </body>
 </html>
-Ugasnur
-commented
-on
